@@ -3,11 +3,16 @@ package gmorm
 import (
 	"encoding/json"
 	"reflect"
+	"time"
 )
 
 // TbObj 表对象接口
 type TbObj interface {
 	TableName() string // 返回表名
+}
+
+type StringObj interface {
+	String() any
 }
 
 // ColObj 字段值接口
@@ -85,7 +90,13 @@ func ObjTagMap(obj any, tag string) (map[string]interface{}, error) {
 						}
 					}
 				default:
-					if valueOf.Field(i).IsNil() || valueOf.Field(i).IsZero() {
+					if valueOf.Field(i).Kind() == reflect.Ptr {
+						if valueOf.Field(i).IsZero() || valueOf.Field(i).IsNil() {
+							continue
+						}
+					}
+					if valueOf.Field(i).Type() == reflect.TypeOf(time.Time{}) || valueOf.Field(i).Type() == reflect.TypeOf(&time.Time{}) {
+						params[tag] = valueOf.Field(i).Interface()
 						continue
 					}
 					if co, ok := valueOf.Field(i).Interface().(ColObj); ok {
